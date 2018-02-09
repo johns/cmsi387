@@ -1,0 +1,125 @@
+Classwork 2: C-Lions Unite
+Sam Chami, Sam Savini, and John Scott
+
+1.1.
+
+#include <stdio.h>
+  int main () {
+  printf("%zu\n", sizeof(char));
+  printf("%zu\n", sizeof(int));
+  printf("%zu\n", sizeof(double));
+  return 0;
+}
+
+
+1.2.
+
+- Automatic / Local
+	- Allocated when the program enters the variable's area
+	- Memory is allocated on the stack
+	- int array[10];
+	- Freed when it leaves the scope of the code program
+
+- Static
+	-used for a variable that needs to exist among different scopes within a program
+	- Memory is allocated in main memory
+	- int array[10];
+	- The memory is reserved when the program is running.
+
+- Dynamic
+	- Dynamic memory gives the user more control over the allocation and deallocation of memory by only allowing the deallocation of memory upon the user’s command.
+	- Memory is allocated in the heap
+	- int *array = malloc(10 * sizeof(int));
+	- Call function to free variable: free(array);
+
+
+1.3.
+
+Automatic: int array[5];
+Malloc: int *array = malloc(5 * sizeof(int));
+Calloc: int *array = calloc(5, sizeof(int));
+
+#include<stdio.h>
+
+int main() {
+	int arrayAuto[5];
+	arrayAuto[0] = 9;
+	arrayAuto[1] = 8;
+	arrayAuto[2] = 7;
+	arrayAuto[3] = 6;
+	arrayAuto[4] = 5;
+
+	int* arrayMalloc = malloc(5 * sizeof(int));
+	arrayMalloc[0] = 9;
+	arrayMalloc[1] = 8;
+	arrayMalloc[2] = 7;
+	arrayMalloc[3] = 6;
+	arrayMalloc[4] = 5;
+
+	int* arrayCalloc = calloc(5, sizeof(int));
+	arrayCalloc[0] = 9;
+	arrayCalloc[1] = 8;
+	arrayCalloc[2] = 7;
+	arrayCalloc[3] = 6;
+	arrayCalloc[4] = 5;
+
+	printf("%p\n", &arrayAuto[0]);
+	printf("%p\n", &arrayAuto[1]);
+	printf("%p\n", &arrayAuto[2]);
+	printf("%p\n", &arrayAuto[3]);
+	printf("%p\n", &arrayAuto[4]);
+
+	printf("%p\n", &arrayMalloc[0]);
+	printf("%p\n", &arrayMalloc[1]);
+	printf("%p\n", &arrayMalloc[2]);
+	printf("%p\n", &arrayMalloc[3]);
+	printf("%p\n", &arrayMalloc[4]);
+
+	printf("%p\n", &arrayCalloc[0]);
+	printf("%p\n", &arrayCalloc[1]);
+	printf("%p\n", &arrayCalloc[2]);
+	printf("%p\n", &arrayCalloc[3]);
+	printf("%p\n", &arrayCalloc[4]);
+	return 0;
+}
+
+The memory addresses increase by 4 bytes when incrementing to the next array index.
+
+
+1.4.
+
+	Allocation Failure: Allocation failure occurs when there is no more space left to allocate an object, thus returning NULL.
+
+	Memory Leak:  Failure to deallocate memory using free leads to buildup of non-reusable memory, which is no longer used by the program. This wastes memory resources and can lead to allocation failures when these resources are exhausted.
+/* Function with memory leak */
+#include <stdlib.h>
+void f(){
+   int *ptr = (int *) malloc(sizeof(int));
+   /* Do some work */
+   return; /* Return without freeing ptr*/
+}
+
+	Double Free:  Double free error is caused by freeing same memory location twice by calling free() on the same allocated memory.
+/* Function with double free*/
+int* f() {
+      int *arr = malloc(5 * sizeof(int));
+      free(arr);
+      free(arr);
+      return arr;
+}
+
+
+1.5.
+
+The memory-management offense was a Segmentation fault and it was repaired by switching the automatic allocation of the array to malloc and then deallocating the memory with free(arr).
+int* f() {
+      int *arr = malloc(5 * sizeof(int));
+      for (int i = 0; i < 5; i++) {
+          arr[i] = i;
+      }
+      free(arr);
+      return arr;
+}
+
+
+2.1.
