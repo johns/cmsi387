@@ -1,0 +1,95 @@
+Homework 1: Getting to Know U(buntu)
+John Scott
+
+Problem 1:
+
+1. clear - clear all previous commands' output text from the terminal
+$ cat secrets.txt
+nothing to see here
+$ clear
+
+(terminal becomes just...)
+$
+
+Clears the previous commands, cat secrets.txt and clear, as well as any output from the commands from the current terminal display.
+
+
+2. cat - output the contents of a file
+$ cat secrets.txt
+nothing to see here
+$
+
+Displays the contents of secrets.txt which happens to be "nothing to see here."
+
+
+3. whoami - outputs your user name
+$ whoami
+john
+$
+
+Outputs the user name, which in this case is "john."
+
+
+4. which - shows the complete path of a command or file
+$ which which
+/usr/bin/which
+$
+
+Displays the path of the command "which."
+
+
+5. uname - print information about the system
+$ uname
+Linux
+$
+
+Outputs the name of the current Operating System, which in this case in Linux.
+
+
+6. date - outputs the current date/time
+$ date
+Fri Feb  9 13:32:09 PST 2018
+$
+
+Returns the current date and time based on location.
+
+
+7. find - search for files by name within a given directory
+$ find secrets.txt
+secrets.txt
+$
+
+Searches for file named "secrets.txt" and returns its name to show it exists.
+
+
+8. diff - output differences between two files
+$ diff secrets.txt filewithnothinginit.txt
+1d0
+< nothing to see here
+$
+
+Reports the number of differences between secrets.txt and filewithnothinginit.txt and outputs the actual difference.
+
+
+9. du - report disk space used by a file/directory
+$ du Desktop/
+4       Desktop/
+$
+
+Reports the approximate disk space used by the Desktop directory.
+
+
+10. time - measure how long a program takes to run
+$ time cat secrets.txt
+nothing to see here
+
+real    0m0.006s
+user    0m0.002s
+sys     0m0.003s
+$
+
+Runs "cat secrets.txt" then gives a few measurements of how long it took to complete.
+
+
+
+Problem 2:
