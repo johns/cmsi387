@@ -138,3 +138,10 @@ Problem 3:
 
 
 Problem 4:
+
+Bash commands design and usage are a perfect example of the Rule of Simplicity of the Unix Philosophy.
+Many of the commands used in bash are simply-named and perform a small, specific task.
+However combining many of these commands allows proficient users to perform big and small tasks very quickly and with great precision.
+That is a very appreciated feature of bash commands that clearly embodies the Rule of Simplicity.
+The embodiment is shown by putting "a high value on simple solutions, that looks for ways to break program systems up into small cooperating pieces."
+Bash commands also demonstrates the Rule of Composition, which states "Design programs to be connected to other programs," by how easily chain-able bash commands are.
