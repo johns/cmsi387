@@ -93,3 +93,48 @@ Runs "cat secrets.txt" then gives a few measurements of how long it took to comp
 
 
 Problem 2:
+
+1. HOME - the pathname of the user's home directory; used in tilde expansion
+
+2. ! - expands to the decimal process ID of the most recent background command
+
+3. $ - expands to the decimal process ID of the invoked shell
+
+4. !! - escapes the "!" reserved name to place the literal character "!" in the prompt
+
+5. PATH -  a string formatted as described in XBD Environment Variables, used to effect command interpretation
+
+6. ? - expands to the decimal exit status of the most recent pipeline
+
+7. * - expands to the positional parameters, starting from one, initially producing one field for each positional parameter that is set
+
+8. .. - refers to the parent directory in a relative path
+
+9. >> - redirects stdout to a file; creates the file if not present, otherwise appends to it
+
+10. << - redirects stdin to a file; creates the file if not present, otherwise prepends to it
+
+
+
+Problem 3:
+
+1. bin - contains the executable programs that must be available in order to attain minimal functionality for the purposes of booting and repairing a system
+
+2. home - contains users' home directories and serves as the repository for a user's personal files, directories, and programs
+
+3. sbin - contains executable programs, but are mostly administrative tools that should be made available only to the root user
+
+4. mnt - intended for use as the temporary mount points for mounting storage devices, such as CDROMs, floppy disks and USB key drives; can be empty, or it can contain subdirectories for mounting individual devices
+
+5. var - contains files to which the system writes data during the course of its operation and does not share itself over a network with other computers
+
+
+1. cache - base directory relative to which user specific non-essential data files are stored (generally contains the stored cache of web browsers and other applications)
+
+2. config - base directory relative to which user specific configuration files are stored
+
+3. local - base directory relative to which user specific data files are stored
+
+
+
+Problem 4:
