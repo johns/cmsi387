@@ -1,6 +1,7 @@
 Classwork 2: C-Lions Unite
 Sam Chami, Sam Savini, and John Scott
 
+
 1.1.
 
 #include <stdio.h>
@@ -12,13 +13,14 @@ Sam Chami, Sam Savini, and John Scott
 }
 
 
+
 1.2.
 
 - Automatic / Local
-	- Allocated when the program enters the variable's area
-	- Memory is allocated on the stack
-	- int array[10];
-	- Freed when it leaves the scope of the code program
+  - Allocated when the program enters the variable's area
+  - Memory is allocated on the stack
+  - int array[10];
+  - Freed when it leaves the scope of the code program
 
 - Static
 	-used for a variable that needs to exist among different scopes within a program
@@ -31,6 +33,7 @@ Sam Chami, Sam Savini, and John Scott
 	- Memory is allocated in the heap
 	- int *array = malloc(10 * sizeof(int));
 	- Call function to free variable: free(array);
+
 
 
 1.3.
@@ -86,11 +89,23 @@ int main() {
 The memory addresses increase by 4 bytes when incrementing to the next array index.
 
 
+
 1.4.
 
-	Allocation Failure: Allocation failure occurs when there is no more space left to allocate an object, thus returning NULL.
+Allocation Failure: Allocation failure occurs when there is no more space left to allocate an object, thus returning NULL.
+Allocation failures occur with large arrays. For example, an allocation failure is likely to occur below:
 
-	Memory Leak:  Failure to deallocate memory using free leads to buildup of non-reusable memory, which is no longer used by the program. This wastes memory resources and can lead to allocation failures when these resources are exhausted.
+char aLottaLetters = malloc(sizeof(int) * 10000);
+
+An allocation failure is marked with a null. So to check for failures, it’s as easy as the following:
+
+if(aLottaLetters == NULL) {
+// Code to account for the failure
+}
+
+
+Memory Leak:  Failure to deallocate memory using free leads to buildup of non-reusable memory, which is no longer used by the program. This wastes memory resources and can lead to allocation failures when these resources are exhausted.
+
 /* Function with memory leak */
 #include <stdlib.h>
 void f(){
@@ -99,7 +114,9 @@ void f(){
    return; /* Return without freeing ptr*/
 }
 
-	Double Free:  Double free error is caused by freeing same memory location twice by calling free() on the same allocated memory.
+
+Double Free:  Double free error is caused by freeing same memory location twice by calling free() on the same allocated memory.
+
 /* Function with double free*/
 int* f() {
       int *arr = malloc(5 * sizeof(int));
@@ -109,9 +126,11 @@ int* f() {
 }
 
 
+
 1.5.
 
 The memory-management offense was a Segmentation fault and it was repaired by switching the automatic allocation of the array to malloc and then deallocating the memory with free(arr).
+
 int* f() {
       int *arr = malloc(5 * sizeof(int));
       for (int i = 0; i < 5; i++) {
@@ -120,6 +139,3 @@ int* f() {
       free(arr);
       return arr;
 }
-
-
-2.1.
