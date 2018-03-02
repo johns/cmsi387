@@ -7,14 +7,32 @@
 
 2. PID of bash terminal: `5629`. Tree: `bash───a.out───a.out`
 
-3. Result was: `15`
-
-  `[1]+  Exit 126 ./arrested_dev.c`
+3. ```
+All done! Result was:15
+[1]+  Exit 126 ./arrested_dev.c
+```
 
 ### Problem 2 - `fork_count.c`
-1. 4 processes are created during `fork_count.c`'s execution.
+1. 8 processes are created during `fork_count.c`'s execution.
 
-2. Not done yet...
+2. Below is modified version of `fork_count.c` using `getpid()` system call.
+
+```c
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+int main() {
+    fork();
+
+    fork();
+
+    fork();
+    printf("%d\n", getpid());
+
+    return 0;
+}
+```
 
 ### Problem 3 - `fork_exec_print.c`
 No, it will not be printed because the `execlp` call following the `fork()` call spawns a new process, in which the current child process from the `fork()` is replaced by the new `ls` program file from the `execlp` call’s execution.
@@ -27,7 +45,19 @@ Output: `PARENT: svar=0, lvar=0, dvar=0`
 
 ### Problem 5 - `forkonacci.c`
 ```c
-Put forkonacci.c here...
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+
+int main (int argc, char** argv) {
+   if (argv[1] <= 1) {
+     return argv[1];
+   }
+   return (argv[1] - 1) + (argv[1] - 2);
+   return 0;
+}
+
 ```
 
 ### Problem 6 - `fork_bomb.c`
