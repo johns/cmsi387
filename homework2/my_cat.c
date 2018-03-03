@@ -1,13 +1,10 @@
 #include <fcntl.h>
-#include <linux/limits.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
-
-int main (int argc, char** argv) {
+int main(int argc, char** argv) {
   for (int i = 1; i < argc; i++) {
     char abspath[PATH_MAX];
     realpath(argv[i], abspath);
