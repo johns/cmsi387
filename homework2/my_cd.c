@@ -1,18 +1,26 @@
+#include <dirent.h>
 #include <linux/limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-int main (int argc, char** argv) {
-  char buffer[1024];
-  char* path = realpath(argv[1], buffer);
+int main(int argc, char** argv) {
+	char* newPath;
+	char currentPath[PATH_MAX];
+	newPath = getcwd(currentPath, PATH_MAX);
 
-  chdir(path);
-  getenv(buffer);
-  int bufferLength = strlen(buffer);
-  buffer[bufferLength] = '\n';
-  buffer[bufferLength+1] = '\0';
-  write(1, buffer, bufferLength+1);
+	if (argc == 1) {
+		chdir(getenv("HOME"));
+	} else {
+		strcat(newPath, "/");
+		strcat(newPath, argv[1]);
+		chdir(newPath);
+	}
 
-  return 0;
+	newPath = getcwd(currentPath, PATH_MAX);
+	strcat(newPath, "\n");
+	write(1, newPath, strlen(newPath));
+
+	return 0;
 }
