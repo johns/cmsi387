@@ -1,277 +1,190 @@
 // C Program to design a shell in Linux
 #include<stdio.h>
-#include<string.h>
 #include<stdlib.h>
-#include<unistd.h>
-#include<sys/types.h>
+#include<string.h>
 #include<sys/wait.h>
-#include<readline/readline.h>
-#include<readline/history.h>
+#include<unistd.h>
 
-#define MAXCOM 1000 // max number of letters to be supported
-#define MAXLIST 100 // max number of commands to be supported
+#define BUMP_RL_BUFSIZE 1024
+#define BUMP_TOK_BUFSIZE 64
+#define BUMP_TOK_DELIM " \t\r\n\a"
 
-// Clearing the shell using escape sequences
-#define clear() printf("\033[H\033[J")
+/*
+  Function Declarations for builtin shell commands:
+ */
+int bump_cd(char** args);
+int bump_help(char** args);
+int bump_sup(char** args);
+int bump_exit(char** args);
 
-// Greeting shell during startup
-void init_shell()
-{
-    clear();
-    printf("\n\n\n\n******************"
-        "************************");
-    printf("\n\n\n\t****MY SHELL****");
-    printf("\n\n\t-USE AT YOUR OWN RISK-");
-    printf("\n\n\n\n*******************"
-        "***********************");
-    char* username = getenv("USER");
-    printf("\n\n\nUSER is: @%s", username);
-    printf("\n");
-    sleep(1);
-    clear();
+/*
+  List of builtin commands, followed by their corresponding functions.
+ */
+char* builtin_str[] = {
+  "cd",
+  "help",
+  "sup",
+  "exit"
+};
+
+int (*builtin_func[]) (char**) = {
+  &bump_cd,
+  &bump_help,
+  &bump_sup,
+  &bump_exit
+};
+
+int bump_num_builtins() {
+  return sizeof(builtin_str) / sizeof(char*);
 }
 
-// Function to take input
-int takeInput(char* str)
+/*
+  Builtin function implementations.
+*/
+int bump_cd(char** args)
 {
-    char* buf;
-
-    buf = readline("\n>>> ");
-    if (strlen(buf) != 0) {
-        add_history(buf);
-        strcpy(str, buf);
-        return 0;
-    } else {
-        return 1;
+  if (args[1] == NULL) {
+    fprintf(stderr, "bump: expected argument to \"cd\"\n");
+  } else {
+    if (chdir(args[1]) != 0) {
+      perror("bump");
     }
+  }
+  return 1;
 }
 
-// Function to print Current Directory.
-void printDir()
+int bump_help(char** args)
 {
-    char cwd[1024];
-    getcwd(cwd, sizeof(cwd));
-    printf("\nDir: %s", cwd);
+  int i;
+  printf("John Scott's BUMP\n");
+  printf("Type program names and arguments, and hit enter.\n");
+  printf("The following are built in:\n");
+
+  for (i = 0; i < bump_num_builtins(); i++) {
+    printf("  %s\n", builtin_str[i]);
+  }
+
+  printf("Use the man command for information on other programs.\n");
+  return 1;
 }
 
-// Function where the system command is executed
-void execArgs(char** parsed)
+int bump_sup(char **args)
 {
-    // Forking a child
-    pid_t pid = fork();
-
-    if (pid == -1) {
-        printf("\nFailed forking child..");
-        return;
-    } else if (pid == 0) {
-        if (execvp(parsed[0], parsed) < 0) {
-            printf("\nCould not execute command..");
-        }
-        exit(0);
-    } else {
-        // waiting for child to terminate
-        wait(NULL);
-        return;
-    }
+  return 0;
 }
 
-// Function where the piped system commands is executed
-void execArgsPiped(char** parsed, char** parsedpipe)
+int bump_exit(char **args)
 {
-    // 0 is read end, 1 is write end
-    int pipefd[2];
-    pid_t p1, p2;
-
-    if (pipe(pipefd) < 0) {
-        printf("\nPipe could not be initialized");
-        return;
-    }
-    p1 = fork();
-    if (p1 < 0) {
-        printf("\nCould not fork");
-        return;
-    }
-
-    if (p1 == 0) {
-        // Child 1 executing..
-        // It only needs to write at the write end
-        close(pipefd[0]);
-        dup2(pipefd[1], STDOUT_FILENO);
-        close(pipefd[1]);
-
-        if (execvp(parsed[0], parsed) < 0) {
-            printf("\nCould not execute command 1..");
-            exit(0);
-        }
-    } else {
-        // Parent executing
-        p2 = fork();
-
-        if (p2 < 0) {
-            printf("\nCould not fork");
-            return;
-        }
-
-        // Child 2 executing..
-        // It only needs to read at the read end
-        if (p2 == 0) {
-            close(pipefd[1]);
-            dup2(pipefd[0], STDIN_FILENO);
-            close(pipefd[0]);
-            if (execvp(parsedpipe[0], parsedpipe) < 0) {
-                printf("\nCould not execute command 2..");
-                exit(0);
-            }
-        } else {
-            // parent executing, waiting for two children
-            wait(NULL);
-            wait(NULL);
-        }
-    }
+  return 0;
 }
 
-// Help command builtin
-void openHelp()
+int bump_launch(char **args)
 {
-    puts("\n***WELCOME TO MY SHELL HELP***"
-        "\nCopyright @ Suprotik Dey"
-        "\n-Use the shell at your own risk..."
-        "\nList of Commands supported:"
-        "\n>cd"
-        "\n>ls"
-        "\n>exit"
-        "\n>all other general commands available in UNIX shell"
-        "\n>pipe handling"
-        "\n>improper space handling");
+  pid_t pid, wpid;
+  int status;
 
-    return;
+  pid = fork();
+  if (pid == 0) {
+    // Child process
+    if (execvp(args[0], args) == -1) {
+      perror("bump");
+    }
+    exit(EXIT_FAILURE);
+  } else if (pid < 0) {
+    // Error forking
+    perror("bump");
+  } else {
+    // Parent process
+    do {
+      wpid = waitpid(pid, &status, WUNTRACED);
+    } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+  }
+
+  return 1;
 }
 
-// Function to execute builtin commands
-int ownCmdHandler(char** parsed)
+char *bump_read_line(void)
 {
-    int NoOfOwnCmds = 4, i, switchOwnArg = 0;
-    char* ListOfOwnCmds[NoOfOwnCmds];
-    char* username;
-
-    ListOfOwnCmds[0] = "exit";
-    ListOfOwnCmds[1] = "cd";
-    ListOfOwnCmds[2] = "help";
-    ListOfOwnCmds[3] = "hello";
-
-    for (i = 0; i < NoOfOwnCmds; i++) {
-        if (strcmp(parsed[0], ListOfOwnCmds[i]) == 0) {
-            switchOwnArg = i + 1;
-            break;
-        }
-    }
-
-    switch (switchOwnArg) {
-    case 1:
-        printf("\nGoodbye\n");
-        exit(0);
-    case 2:
-        chdir(parsed[1]);
-        return 1;
-    case 3:
-        openHelp();
-        return 1;
-    case 4:
-        username = getenv("USER");
-        printf("\nHello %s.\nMind that this is "
-            "not a place to play around."
-            "\nUse help to know more..\n",
-            username);
-        return 1;
-    default:
-        break;
-    }
-
-    return 0;
+  char *line = NULL;
+  size_t bufsize = 0; // have getline allocate a buffer for us
+  getline(&line, &bufsize, stdin);
+  return line;
 }
 
-// function for finding pipe
-int parsePipe(char* str, char** strpiped)
+char** bump_split_line(char *line)
 {
-    int i;
-    for (i = 0; i < 2; i++) {
-        strpiped[i] = strsep(&str, "|");
-        if (strpiped[i] == NULL)
-            break;
+  int bufsize = BUMP_TOK_BUFSIZE, position = 0;
+  char** tokens = malloc(bufsize* sizeof(char*));
+  char* token;
+
+  if (!tokens) {
+    fprintf(stderr, "bump: allocation error\n");
+    exit(EXIT_FAILURE);
+  }
+
+  token = strtok(line, BUMP_TOK_DELIM);
+  while (token != NULL) {
+    tokens[position] = token;
+    position++;
+
+    if (position >= bufsize) {
+      bufsize += BUMP_TOK_BUFSIZE;
+      tokens = realloc(tokens, bufsize * sizeof(char*));
+      if (!tokens) {
+        fprintf(stderr, "bump: allocation error\n");
+        exit(EXIT_FAILURE);
+      }
     }
 
-    if (strpiped[1] == NULL)
-        return 0; // returns zero if no pipe is found.
-    else {
-        return 1;
-    }
+    token = strtok(NULL, BUMP_TOK_DELIM);
+  }
+  tokens[position] = NULL;
+  return tokens;
 }
 
-// function for parsing command words
-void parseSpace(char* str, char** parsed)
+int bump_execute(char **args)
 {
-    int i;
+  int i;
 
-    for (i = 0; i < MAXLIST; i++) {
-        parsed[i] = strsep(&str, " ");
+  if (args[0] == NULL) {
+    // An empty command was entered.
+    return 1;
+  }
 
-        if (parsed[i] == NULL)
-            break;
-        if (strlen(parsed[i]) == 0)
-            i--;
+  for (i = 0; i < bump_num_builtins(); i++) {
+    if (strcmp(args[0], builtin_str[i]) == 0) {
+      return (*builtin_func[i])(args);
     }
+  }
+
+  return bump_launch(args);
 }
 
-int processString(char* str, char** parsed, char** parsedpipe)
+void bump_loop(void)
 {
+  char *line;
+  char **args;
+  int status;
 
-    char* strpiped[2];
-    int piped = 0;
+  do {
+    printf("> ");
+    line = bump_read_line();
+    args = bump_split_line(line);
+    status = bump_execute(args);
 
-    piped = parsePipe(str, strpiped);
-
-    if (piped) {
-        parseSpace(strpiped[0], parsed);
-        parseSpace(strpiped[1], parsedpipe);
-
-    } else {
-
-        parseSpace(str, parsed);
-    }
-
-    if (ownCmdHandler(parsed))
-        return 0;
-    else
-        return 1 + piped;
+    free(line);
+    free(args);
+  } while (status);
 }
 
-int main()
+int main(int argc, char **argv)
 {
-    char inputString[MAXCOM], *parsedArgs[MAXLIST];
-    char* parsedArgsPiped[MAXLIST];
-    int execFlag = 0;
-    init_shell();
+  // Load config files, if any.
 
-    while (1) {
-        // print shell line
-        printDir();
-        // take input
-        if (takeInput(inputString))
-            continue;
-        // process
-        execFlag = processString(inputString,
-        parsedArgs, parsedArgsPiped);
-        // execflag returns zero if there is no command
-        // or it is a builtin command,
-        // 1 if it is a simple command
-        // 2 if it is including a pipe.
+  // Run command loop.
+  bump_loop();
 
-        // execute
-        if (execFlag == 1)
-            execArgs(parsedArgs);
+  // Perform any shutdown/cleanup.
 
-        if (execFlag == 2)
-            execArgsPiped(parsedArgs, parsedArgsPiped);
-    }
-    return 0;
+  return EXIT_SUCCESS;
 }
