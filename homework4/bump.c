@@ -55,9 +55,13 @@ void parseCmd(char* cmd, char** params)
 }
 
 int executeCmd(char** params) {
-    // Change directory?
+    // Change directory
     if(strcmp(params[0], "cd") == 0) {
         chdir(params[1]);
+        return 1;
+    } // Sup World syscall
+    else if(strcmp(params[0], "supworld") == 0) {
+        syscall(333, NULL);
         return 1;
     }
     // Fork process
