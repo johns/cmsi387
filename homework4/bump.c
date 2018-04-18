@@ -15,12 +15,14 @@ int main()
 {
     char cmd[MAX_COMMAND_LENGTH + 1];
     char* params[MAX_NUMBER_OF_PARAMS + 1];
+    char directory[1024];
+
+    chdir(getenv("HOME"));
 
     while(1) {
+        if(getcwd(directory, sizeof(directory)) != NULL)
         // Print command prompt
-        char* cwd = getenv("HOME");
-        chdir(cwd);
-        printf("BUMP::<%s>:: ", cwd);
+        printf("BUMP::<%s>:: ", directory);
 
         // Read command from standard input, exit on Ctrl+D
         if(fgets(cmd, sizeof(cmd), stdin) == NULL) break;
@@ -35,9 +37,6 @@ int main()
 
         // Exit?
         if(strcmp(params[0], "exit") == 0) break;
-
-        // Change directory?
-        if(strcmp(params[0], "cd") == 0) chdir(params[1]);
 
         // Execute command
         if(executeCmd(params) == 0) break;
@@ -55,8 +54,12 @@ void parseCmd(char* cmd, char** params)
     }
 }
 
-int executeCmd(char** params)
-{
+int executeCmd(char** params) {
+    // Change directory?
+    if(strcmp(params[0], "cd") == 0) {
+        chdir(params[1]);
+        return 1;
+    }
     // Fork process
     pid_t pid = fork();
 
