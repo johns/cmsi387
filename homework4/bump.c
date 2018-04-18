@@ -1,190 +1,88 @@
-// C Program to design a shell in Linux
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<sys/wait.h>
-#include<unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <errno.h>
 
-#define BUMP_RL_BUFSIZE 1024
-#define BUMP_TOK_BUFSIZE 64
-#define BUMP_TOK_DELIM " \t\r\n\a"
+void parseCmd(char* cmd, char** params);
+int executeCmd(char** params);
 
-/*
-  Function Declarations for builtin shell commands:
- */
-int bump_cd(char** args);
-int bump_help(char** args);
-int bump_sup(char** args);
-int bump_exit(char** args);
+#define MAX_COMMAND_LENGTH 100
+#define MAX_NUMBER_OF_PARAMS 10
 
-/*
-  List of builtin commands, followed by their corresponding functions.
- */
-char* builtin_str[] = {
-  "cd",
-  "help",
-  "sup",
-  "exit"
-};
-
-int (*builtin_func[]) (char**) = {
-  &bump_cd,
-  &bump_help,
-  &bump_sup,
-  &bump_exit
-};
-
-int bump_num_builtins() {
-  return sizeof(builtin_str) / sizeof(char*);
-}
-
-/*
-  Builtin function implementations.
-*/
-int bump_cd(char** args)
+int main()
 {
-  if (args[1] == NULL) {
-    fprintf(stderr, "bump: expected argument to \"cd\"\n");
-  } else {
-    if (chdir(args[1]) != 0) {
-      perror("bump");
+    char cmd[MAX_COMMAND_LENGTH + 1];
+    char* params[MAX_NUMBER_OF_PARAMS + 1];
+
+    while(1) {
+        // Print command prompt
+        char* cwd = getenv("HOME");
+        chdir(cwd);
+        printf("BUMP::<%s>:: ", cwd);
+
+        // Read command from standard input, exit on Ctrl+D
+        if(fgets(cmd, sizeof(cmd), stdin) == NULL) break;
+
+        // Remove trailing newline character, if any
+        if(cmd[strlen(cmd)-1] == '\n') {
+            cmd[strlen(cmd)-1] = '\0';
+        }
+
+        // Split cmd into array of parameters
+        parseCmd(cmd, params);
+
+        // Exit?
+        if(strcmp(params[0], "exit") == 0) break;
+
+        // Change directory?
+        if(strcmp(params[0], "cd") == 0) chdir(params[1]);
+
+        // Execute command
+        if(executeCmd(params) == 0) break;
     }
-  }
-  return 1;
+
+    return 0;
 }
 
-int bump_help(char** args)
+// Split cmd into array of parameters
+void parseCmd(char* cmd, char** params)
 {
-  int i;
-  printf("John Scott's BUMP\n");
-  printf("Type program names and arguments, and hit enter.\n");
-  printf("The following are built in:\n");
-
-  for (i = 0; i < bump_num_builtins(); i++) {
-    printf("  %s\n", builtin_str[i]);
-  }
-
-  printf("Use the man command for information on other programs.\n");
-  return 1;
+    for(int i = 0; i < MAX_NUMBER_OF_PARAMS; i++) {
+        params[i] = strsep(&cmd, " ");
+        if(params[i] == NULL) break;
+    }
 }
 
-int bump_sup(char **args)
+int executeCmd(char** params)
 {
-  return 0;
-}
+    // Fork process
+    pid_t pid = fork();
 
-int bump_exit(char **args)
-{
-  return 0;
-}
+    // Error
+    if (pid == -1) {
+        char* error = strerror(errno);
+        printf("fork: %s\n", error);
+        return 1;
+    }
 
-int bump_launch(char **args)
-{
-  pid_t pid, wpid;
-  int status;
-
-  pid = fork();
-  if (pid == 0) {
     // Child process
-    if (execvp(args[0], args) == -1) {
-      perror("bump");
+    else if (pid == 0) {
+        // Execute command
+        execvp(params[0], params);
+
+        // Error occurred
+        char* error = strerror(errno);
+        printf("%s: %s\n", params[0], error);
+        return 0;
     }
-    exit(EXIT_FAILURE);
-  } else if (pid < 0) {
-    // Error forking
-    perror("bump");
-  } else {
+
     // Parent process
-    do {
-      wpid = waitpid(pid, &status, WUNTRACED);
-    } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-  }
-
-  return 1;
-}
-
-char *bump_read_line(void)
-{
-  char *line = NULL;
-  size_t bufsize = 0; // have getline allocate a buffer for us
-  getline(&line, &bufsize, stdin);
-  return line;
-}
-
-char** bump_split_line(char *line)
-{
-  int bufsize = BUMP_TOK_BUFSIZE, position = 0;
-  char** tokens = malloc(bufsize* sizeof(char*));
-  char* token;
-
-  if (!tokens) {
-    fprintf(stderr, "bump: allocation error\n");
-    exit(EXIT_FAILURE);
-  }
-
-  token = strtok(line, BUMP_TOK_DELIM);
-  while (token != NULL) {
-    tokens[position] = token;
-    position++;
-
-    if (position >= bufsize) {
-      bufsize += BUMP_TOK_BUFSIZE;
-      tokens = realloc(tokens, bufsize * sizeof(char*));
-      if (!tokens) {
-        fprintf(stderr, "bump: allocation error\n");
-        exit(EXIT_FAILURE);
-      }
+    else {
+        // Wait for child process to finish
+        int childStatus;
+        waitpid(pid, &childStatus, 0);
+        return 1;
     }
-
-    token = strtok(NULL, BUMP_TOK_DELIM);
-  }
-  tokens[position] = NULL;
-  return tokens;
-}
-
-int bump_execute(char **args)
-{
-  int i;
-
-  if (args[0] == NULL) {
-    // An empty command was entered.
-    return 1;
-  }
-
-  for (i = 0; i < bump_num_builtins(); i++) {
-    if (strcmp(args[0], builtin_str[i]) == 0) {
-      return (*builtin_func[i])(args);
-    }
-  }
-
-  return bump_launch(args);
-}
-
-void bump_loop(void)
-{
-  char *line;
-  char **args;
-  int status;
-
-  do {
-    printf("> ");
-    line = bump_read_line();
-    args = bump_split_line(line);
-    status = bump_execute(args);
-
-    free(line);
-    free(args);
-  } while (status);
-}
-
-int main(int argc, char **argv)
-{
-  // Load config files, if any.
-
-  // Run command loop.
-  bump_loop();
-
-  // Perform any shutdown/cleanup.
-
-  return EXIT_SUCCESS;
 }
